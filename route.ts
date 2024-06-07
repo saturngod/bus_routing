@@ -18,7 +18,7 @@ const busStops: BusStop[] = [
   { bustop_id: 1221, bus: [34, 291, 292, 8, 7] },
   { bustop_id: 1222, bus: [8, 7, 4] },
   { bustop_id: 1223, bus: [5, 678, 888] },
-  { bustop_id: 1224, bus: [4, 5, 10, 40] },
+  { bustop_id: 1224, bus: [34, 5, 10, 40] },
   { bustop_id: 1225, bus: [300, 295] },
 ];
 
@@ -30,7 +30,7 @@ const walkingRoutes: WalkingRoute[] = [
 // Function to create a map of bus stop connections
 const createBusStopMap = (busStops: BusStop[], walkingRoutes: WalkingRoute[]) => {
   const busStopMap: Map<number, Set<number>> = new Map();
-  const busRoutesMap: Map<string, number[]> = new Map();
+  const busRoutesMap: Map<string, number | null> = new Map();
 
   busStops.forEach(stop => {
     busStopMap.set(stop.bustop_id, new Set<number>());
@@ -70,51 +70,58 @@ const createBusStopMap = (busStops: BusStop[], walkingRoutes: WalkingRoute[]) =>
   return { busStopMap, busRoutesMap };
 };
 
-// BFS to find the shortest path
-const findRoute = (start: number, destination: number, busStopMap: Map<number, Set<number>>, busRoutesMap: Map<string, number | null>) => {
-  const queue: [number, RouteStep[]][] = [[start, [{ stop: start, mode: "start", route: null }]]];
-  const visited: Set<number> = new Set([start]);
+// DFS to find all paths
+const findAllRoutes = (start: number, destination: number, busStopMap: Map<number, Set<number>>, busRoutesMap: Map<string, number | null>): RouteStep[][] => {
+  const allRoutes: RouteStep[][] = [];
+  const visited: Set<number> = new Set();
 
-  while (queue.length > 0) {
-    const [currentStop, path] = queue.shift()!;
+  const dfs = (currentStop: number, path: RouteStep[]) => {
     if (currentStop === destination) {
-      return path;
+      allRoutes.push([...path]);
+      return;
     }
+
+    visited.add(currentStop);
 
     const neighbors = busStopMap.get(currentStop);
     if (neighbors) {
       for (const neighbor of neighbors) {
         if (!visited.has(neighbor)) {
-          visited.add(neighbor);
           const key = `${currentStop},${neighbor}`;
           const bus = busRoutesMap.get(key);
           const mode = bus === null ? "walk" : "bus";
           const newPath = [...path, { stop: neighbor, mode, route: bus }];
-          queue.push([neighbor, newPath]);
+          dfs(neighbor, newPath);
         }
       }
     }
-  }
 
-  return null; // No route found
+    visited.delete(currentStop);
+  };
+
+  dfs(start, [{ stop: start, mode: "start", route: null }]);
+  return allRoutes;
 };
 
 // Main
 const { busStopMap, busRoutesMap } = createBusStopMap(busStops, walkingRoutes);
 const startStop = 1221;
 const destinationStop = 1225;
-const route = findRoute(startStop, destinationStop, busStopMap, busRoutesMap);
+const allRoutes = findAllRoutes(startStop, destinationStop, busStopMap, busRoutesMap);
 
-if (route) {
-  console.log(`Route from ${startStop} to ${destinationStop}:`);
-  route.forEach(step => {
-    if (step.mode === "start") {
-      console.log(`Start at bus stop ${step.stop}`);
-    } else if (step.mode === "walk") {
-      console.log(`Walk from bus stop ${step.stop}`);
-    } else {
-      console.log(`Take bus number ${step.route} to bus stop ${step.stop}`);
-    }
+if (allRoutes.length > 0) {
+  console.log(`All routes from ${startStop} to ${destinationStop}:`);
+  allRoutes.forEach((route, index) => {
+    console.log(`Route ${index + 1}:`);
+    route.forEach(step => {
+      if (step.mode === "start") {
+        console.log(`  Start at bus stop ${step.stop}`);
+      } else if (step.mode === "walk") {
+        console.log(`  Walk to bus stop ${step.stop}`);
+      } else {
+        console.log(`  Take bus number ${step.route} to bus stop ${step.stop}`);
+      }
+    });
   });
 } else {
   console.log(`No route found from ${startStop} to ${destinationStop}`);
