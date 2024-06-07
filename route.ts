@@ -15,11 +15,11 @@ interface RouteStep {
 }
 
 const busStops: BusStop[] = [
-  { bustop_id: 1221, bus: [34, 291, 292, 8, 7] },
+  { bustop_id: 1221, bus: [34, 291, 292, 8, 7,100] },
   { bustop_id: 1222, bus: [8, 7, 4] },
   { bustop_id: 1223, bus: [5, 678, 888] },
   { bustop_id: 1224, bus: [34, 5, 10, 40] },
-  { bustop_id: 1225, bus: [300, 295] },
+  { bustop_id: 1225, bus: [300, 295,100] },
 ];
 
 const walkingRoutes: WalkingRoute[] = [
